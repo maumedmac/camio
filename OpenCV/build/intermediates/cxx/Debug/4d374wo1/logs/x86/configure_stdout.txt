@@ -12,4 +12,4 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: C:/Users/Yuumi/AndroidStudioProjects/camio/OpenCV/.cxx/Debug/4d374wo1/x86
+-- Build files have been written to: C:/Users/Yuumi/mau/camio/OpenCV/.cxx/Debug/4d374wo1/x86

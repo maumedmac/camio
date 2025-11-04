@@ -46,7 +46,7 @@ public class MainActivity extends CameraActivity implements CvCameraViewListener
             return;
         }
 
-        mModelBuffer = loadFileFromResource(R.raw.mobilenet_iter_73000);
+        mModelBuffer = loadFileFromResource(R.raw.res10_300x300_ssd_iter_140000);
         mConfigBuffer = loadFileFromResource(R.raw.deploy);
         if (mModelBuffer == null || mConfigBuffer == null) {
             Log.e(TAG, "Failed to load model from resources");
@@ -93,8 +93,8 @@ public class MainActivity extends CameraActivity implements CvCameraViewListener
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         final int IN_WIDTH = 300;
         final int IN_HEIGHT = 300;
-        final float WH_RATIO = (float)IN_WIDTH / IN_HEIGHT;
-        final double IN_SCALE_FACTOR = 0.007843;
+       // final float WH_RATIO = (float)IN_WIDTH / IN_HEIGHT;
+        final double IN_SCALE_FACTOR = 1.0;
         final double MEAN_VAL = 127.5;
         final double THRESHOLD = 0.2;
 
@@ -106,7 +106,7 @@ public class MainActivity extends CameraActivity implements CvCameraViewListener
         // Forward image through network.
         Mat blob = Dnn.blobFromImage(frame, IN_SCALE_FACTOR,
                 new Size(IN_WIDTH, IN_HEIGHT),
-                new Scalar(MEAN_VAL, MEAN_VAL, MEAN_VAL), /*swapRB*/false, /*crop*/false);
+                new Scalar(104.0, 177.0, 123.0), /*swapRB*/false, /*crop*/false);
         net.setInput(blob);
         Mat detections = net.forward();
 
@@ -118,7 +118,7 @@ public class MainActivity extends CameraActivity implements CvCameraViewListener
         for (int i = 0; i < detections.rows(); ++i) {
             double confidence = detections.get(i, 2)[0];
             if (confidence > THRESHOLD) {
-                int classId = (int)detections.get(i, 1)[0];
+                //int classId = (int)detections.get(i, 1)[0];
 
                 int left   = (int)(detections.get(i, 3)[0] * cols);
                 int top    = (int)(detections.get(i, 4)[0] * rows);
@@ -127,21 +127,21 @@ public class MainActivity extends CameraActivity implements CvCameraViewListener
 
                 // Draw rectangle around detected object.
                 Imgproc.rectangle(frame, new Point(left, top), new Point(right, bottom),
-                        new Scalar(0, 255, 0));
-                String label = classNames[classId] + ": " + confidence;
+                        new Scalar(0, 255, 0), 2); // Aumenté el grosor a 2 para mejor visibilidad
+                String label = "Rostro: " + String.format("%.2f", confidence * 100) + "%";
                 int[] baseLine = new int[1];
-                Size labelSize = Imgproc.getTextSize(label, Imgproc.FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
-
+                Size labelSize = Imgproc.getTextSize(label, Imgproc.FONT_HERSHEY_SIMPLEX, 1.5, 2, baseLine);
+                top = Math.max(top, (int)labelSize.height);
                 // Draw background for label.
                 Imgproc.rectangle(frame, new Point(left, top - labelSize.height),
                         new Point(left + labelSize.width, top + baseLine[0]),
                         new Scalar(255, 255, 255), Imgproc.FILLED);
                 // Write class name and confidence.
                 Imgproc.putText(frame, label, new Point(left, top),
-                        Imgproc.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0, 0, 0));
+                        Imgproc.FONT_HERSHEY_SIMPLEX, 1.5, new Scalar(0, 0, 0), 2);
             }
         }
-
+        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2RGBA);
         return frame;
     }
 
@@ -168,13 +168,14 @@ public class MainActivity extends CameraActivity implements CvCameraViewListener
     }
 
     private static final String TAG = "OpenCV-MobileNet";
+    /*
     private static final String[] classNames = {"background",
             "aeroplane", "bicycle", "bird", "boat",
             "bottle", "bus", "car", "cat", "chair",
             "cow", "diningtable", "dog", "horse",
             "motorbike", "person", "pottedplant",
             "sheep", "sofa", "train", "tvmonitor"};
-
+*/
     private MatOfByte            mConfigBuffer;
     private MatOfByte            mModelBuffer;
     private Net                  net;
